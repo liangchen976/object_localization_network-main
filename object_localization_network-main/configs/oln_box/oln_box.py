@@ -29,15 +29,20 @@ model = dict(
             type='AnchorGenerator',
             # Use a single anchor per location.
             scales=[8],
+            # 只用一种ratio的正方形的base框
             ratios=[1.0],
             strides=[4, 8, 16, 32, 64]),
+        # 采用的Centerness的box回归方式 即 左top blow left right
         bbox_coder=dict(
             type='TBLRBBoxCoder',
             normalizer=1.0,),
+        # 分类头的权重改成0  意味着取消了这个头
         loss_cls=dict(
             type='CrossEntropyLoss', use_sigmoid=True, loss_weight=0.0),
         reg_decoded_bbox=True,
+        # 框回归使用IoULoss 类似FCOS 权重改成了10
         loss_bbox=dict(type='IoULoss', linear=True, loss_weight=10.0),
+        # 添加Centerness head分支
         objectness_type='Centerness',
         loss_objectness=dict(type='L1Loss', loss_weight=1.0),
         ),
@@ -53,18 +58,22 @@ model = dict(
             in_channels=256,
             fc_out_channels=1024,
             roi_feat_size=7,
+            # 在roi部分，不在对类别进行分类 仅使用 Centerness 得分，所以维度是1
             num_classes=1,
+            # 二阶段修正时与faster-rcnn一样 是框的refine
             bbox_coder=dict(
                 type='DeltaXYWHBBoxCoder',
                 target_means=[0., 0., 0., 0.],
                 target_stds=[0.1, 0.1, 0.2, 0.2]),
             reg_class_agnostic=False,
+            # 同上 这里的cls head也取消 权重设置为0
             loss_cls=dict(
                 type='CrossEntropyLoss', 
                 use_sigmoid=False, 
                 loss_weight=0.0,
                 ),
             loss_bbox=dict(type='L1Loss', loss_weight=1.0),
+            # 添加Centerness head分支
             bbox_score_type='BoxIoU',  # 'BoxIoU' or 'Centerness'
             loss_bbox_score=dict(type='L1Loss', loss_weight=1.0),
             )),
@@ -83,7 +92,8 @@ model = dict(
                 pos_fraction=0.5,
                 neg_pos_ub=-1,
                 add_gt_as_proposals=False),
-            # Objectness assigner and sampler 
+            # Objectness assigner and sampler
+            # 这部分是新加的 和faster-rcnn不同 正负样本设置
             objectness_assigner=dict(
                 type='MaxIoUAssigner',
                 pos_iou_thr=0.3,
@@ -100,6 +110,7 @@ model = dict(
             allowed_border=0,
             pos_weight=-1,
             debug=False),
+        # rpn_proposal不同
         rpn_proposal=dict(
             nms_across_levels=False,
             nms_pre=2000,

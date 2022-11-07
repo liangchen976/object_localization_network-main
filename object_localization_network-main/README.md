@@ -84,6 +84,7 @@ python tools/test.py configs/oln_box/oln_box.py work_dirs/oln_box/latest.pth --e
 ```
 # Multi-GPU distributed training
 bash tools/dist_train.sh configs/oln_box/oln_box.py ${NUM_GPUS}
+python train.py ../configs/oln_box/oln_box.py
 
 ```
 
